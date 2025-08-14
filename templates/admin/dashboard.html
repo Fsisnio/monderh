@@ -1,0 +1,584 @@
+{% extends "base.html" %}
+
+{% block title %}Administration - Tableau de bord{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 admin-layout">
+    <div class="row">
+        <!-- Sidebar Professionnelle -->
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="sidebar-sticky pt-3">
+                <div class="admin-header px-3 mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="admin-avatar me-3">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 text-white fw-bold">Administration</h6>
+                            <small class="text-white-50">{{ current_user.first_name }} {{ current_user.last_name }}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <ul class="nav flex-column admin-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin_dashboard') }}">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Tableau de bord</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_settings') }}">
+                            <i class="fas fa-cogs"></i>
+                            <span>Paramètres</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_users') }}">
+                            <i class="fas fa-users"></i>
+                            <span>Utilisateurs</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_applications') }}">
+                            <i class="fas fa-briefcase"></i>
+                            <span>Candidatures</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_appointments') }}">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Rendez-vous</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="sidebar-footer mt-auto px-3 py-3">
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm w-100">
+                        <i class="fas fa-external-link-alt me-2"></i>Voir le site
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Contenu Principal -->
+        <main role="main" class="main-content px-4">
+            <!-- En-tête avec actions -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
+                <div>
+                    <h1 class="h2 mb-0">
+                        <i class="fas fa-chart-line text-primary me-2"></i>
+                        Tableau de bord
+                    </h1>
+                    <p class="text-muted mb-0">Vue d'ensemble de votre plateforme RH</p>
+                </div>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-download me-1"></i>Exporter
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('admin_export', format='csv') }}">
+                                    <i class="fas fa-file-csv me-2"></i>CSV
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_export', format='excel') }}">
+                                    <i class="fas fa-file-excel me-2"></i>Excel
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_export', format='pdf') }}">
+                                    <i class="fas fa-file-pdf me-2"></i>PDF
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_export', format='png') }}">
+                                    <i class="fas fa-chart-bar me-2"></i>Graphiques (PNG)
+                                </a></li>
+                            </ul>
+                        </div>
+                        <a href="{{ url_for('apply') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Nouvelle candidature
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cartes de statistiques -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stat-card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Candidatures
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        {{ total_applications or 0 }}
+                                    </div>
+                                    <div class="mt-2 mb-0 text-muted text-xs">
+                                        <span class="text-success mr-2">
+                                            <i class="fas fa-arrow-up"></i> +12%
+                                        </span>
+                                        <span>depuis le mois dernier</span>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="icon-circle bg-primary">
+                                        <i class="fas fa-file-alt text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stat-card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Rendez-vous
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        {{ total_appointments or 0 }}
+                                    </div>
+                                    <div class="mt-2 mb-0 text-muted text-xs">
+                                        <span class="text-success mr-2">
+                                            <i class="fas fa-arrow-up"></i> +8%
+                                        </span>
+                                        <span>depuis le mois dernier</span>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="icon-circle bg-success">
+                                        <i class="fas fa-calendar-check text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stat-card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                        Utilisateurs
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        {{ total_users or 0 }}
+                                    </div>
+                                    <div class="mt-2 mb-0 text-muted text-xs">
+                                        <span class="text-info mr-2">
+                                            <i class="fas fa-arrow-up"></i> +5%
+                                        </span>
+                                        <span>depuis le mois dernier</span>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="icon-circle bg-info">
+                                        <i class="fas fa-users text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stat-card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        Newsletter
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        {{ total_newsletter or 0 }}
+                                    </div>
+                                    <div class="mt-2 mb-0 text-muted text-xs">
+                                        <span class="text-warning mr-2">
+                                            <i class="fas fa-arrow-up"></i> +2%
+                                        </span>
+                                        <span>depuis le mois dernier</span>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="icon-circle bg-warning">
+                                        <i class="fas fa-envelope text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Google Workspace -->
+            <div class="row mb-4">
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-gradient-primary text-white border-0">
+                            <h5 class="card-title mb-0">
+                                <i class="fab fa-google me-2"></i>Intégration Google Workspace
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6 class="mb-2">Connecter Google Workspace</h6>
+                                    <p class="text-muted mb-3">Connectez votre compte Google pour :</p>
+                                    <ul class="list-unstyled mb-3">
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            <i class="fas fa-cloud text-primary me-1"></i>
+                                            Sauvegarder automatiquement vos CV sur Google Drive
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            <i class="fas fa-calendar text-danger me-1"></i>
+                                            Synchroniser vos rendez-vous avec Google Calendar
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            <i class="fas fa-share-alt text-info me-1"></i>
+                                            Partager facilement vos documents
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <a href="{{ url_for('google_auth') }}" class="btn btn-google btn-lg">
+                                        <i class="fab fa-google me-2"></i>
+                                        Connecter Google
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-gradient-info text-white border-0">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-bolt me-2"></i>Actions rapides
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('apply') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-plus me-2"></i>Nouvelle candidature
+                                </a>
+                                <a href="{{ url_for('appointments') }}" class="btn btn-outline-success">
+                                    <i class="fas fa-calendar-plus me-2"></i>Prendre rendez-vous
+                                </a>
+                                <a href="{{ url_for('admin_users') }}" class="btn btn-outline-info">
+                                    <i class="fas fa-user-plus me-2"></i>Gérer utilisateurs
+                                </a>
+                                <a href="{{ url_for('admin_settings') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-cogs me-2"></i>Paramètres
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activités récentes -->
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header border-0 bg-transparent">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-clock text-primary me-2"></i>
+                                Rendez-vous récents
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_appointments %}
+                                {% for appointment in recent_appointments %}
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="avatar-sm bg-success-soft rounded-circle me-3">
+                                        <i class="fas fa-calendar text-success"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ appointment.user.first_name }} {{ appointment.user.last_name }}</h6>
+                                        <p class="text-muted mb-0 small">{{ appointment.service_type|title }} - {{ appointment.date.strftime('%d/%m/%Y') }}</p>
+                                    </div>
+                                    <span class="badge bg-{{ 'warning' if appointment.status == 'pending' else 'success' }}">
+                                        {{ appointment.status|title }}
+                                    </span>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-calendar-times text-muted fa-3x mb-3"></i>
+                                    <p class="text-muted">Aucun rendez-vous récent</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header border-0 bg-transparent">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-briefcase text-primary me-2"></i>
+                                Candidatures récentes
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_applications %}
+                                {% for application in recent_applications %}
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="avatar-sm bg-primary-soft rounded-circle me-3">
+                                        <i class="fas fa-file-alt text-primary"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ application.position }}</h6>
+                                        <p class="text-muted mb-0 small">
+                                            {% if application.applicant %}
+                                                {{ application.applicant.first_name }} {{ application.applicant.last_name }}
+                                            {% else %}
+                                                Candidat externe
+                                            {% endif %}
+                                            - {{ application.created_at.strftime('%d/%m/%Y') }}
+                                        </p>
+                                    </div>
+                                    <span class="badge bg-{{ 'warning' if application.status == 'pending' else 'success' if application.status == 'accepted' else 'danger' }}">
+                                        {{ application.status|title }}
+                                    </span>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-inbox text-muted fa-3x mb-3"></i>
+                                    <p class="text-muted">Aucune candidature récente</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<style>
+/* Sidebar Professionnelle */
+.sidebar {
+    position: fixed;
+    top: 80px;
+    bottom: 0;
+    left: 0;
+    width: 250px; /* Largeur fixe pour la sidebar */
+    z-index: 100;
+    padding: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-header {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    margin: 0 15px;
+    padding: 15px !important;
+}
+
+.admin-avatar {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.admin-nav .nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    padding: 12px 20px;
+    margin: 2px 15px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+}
+
+.admin-nav .nav-link:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+}
+
+.admin-nav .nav-link.active {
+    color: white;
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.admin-nav .nav-link i {
+    width: 20px;
+    margin-right: 10px;
+    text-align: center;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+}
+
+/* Cartes de statistiques */
+.stat-card {
+    transition: all 0.3s ease;
+    border-radius: 10px;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.icon-circle {
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #00d4aa 0%, #00a5d4 100%);
+}
+
+/* Bouton Google */
+.btn-google {
+    background: #4285f4;
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-google:hover {
+    background: #3367d6;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(66, 133, 244, 0.3);
+}
+
+/* Avatars pour activités */
+.avatar-sm {
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bg-primary-soft {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+.bg-success-soft {
+    background-color: rgba(25, 135, 84, 0.1);
+}
+
+/* Corrections pour l'affichage avec sidebar */
+.admin-layout {
+    min-height: calc(100vh - 300px);
+    flex: 1;
+}
+
+.main-content {
+    margin-left: 250px; /* Espace pour la sidebar fixe */
+    margin-bottom: 0;
+    padding-left: 2rem;
+    width: calc(100% - 250px); /* Largeur ajustée */
+    flex: 1;
+}
+
+.admin-layout main {
+    margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        position: relative;
+        top: auto;
+        height: auto;
+        width: 100% !important;
+        padding: 1rem;
+    }
+    
+    .admin-layout {
+        padding-bottom: 100px !important;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        padding-left: 1rem !important;
+        width: 100% !important;
+    }
+    
+    .admin-layout main {
+        margin-left: 0 !important;
+        padding-left: 1rem !important;
+    }
+}
+
+/* Styles pour le menu d'export */
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 0.5rem 0;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    margin: 0 0.5rem;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(5px);
+}
+
+.dropdown-item i {
+    width: 20px;
+    text-align: center;
+}
+
+/* Couleurs spécifiques pour chaque format */
+.dropdown-item[href*="csv"] i {
+    color: #28a745;
+}
+
+.dropdown-item[href*="excel"] i {
+    color: #217346;
+}
+
+.dropdown-item[href*="pdf"] i {
+    color: #dc3545;
+}
+
+.dropdown-item[href*="png"] i {
+    color: #17a2b8;
+}
+</style>
+{% endblock %} 

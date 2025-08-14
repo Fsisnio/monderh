@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block title %}Tableau de bord - MonDRH{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header avec gradient moderne -->
+<section class="dashboard-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="welcome-section">
+                    <h1 class="welcome-title">
+                        <i class="fas fa-chart-line me-3"></i>Tableau de bord
+                    </h1>
+                    <p class="welcome-subtitle">
+                        Bonjour <span class="user-name">{{ current_user.first_name }}</span> ! Voici un aperçu de vos activités.
+                    </p>
+                    <div class="welcome-stats">
+                        <span class="stat-item">
+                            <i class="fas fa-calendar-check"></i>
+                            {{ appointments|length }} RDV
+                        </span>
+                        <span class="stat-item">
+                            <i class="fas fa-file-alt"></i>
+                            {{ applications|length }} candidatures
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="action-buttons">
+                    <a href="{{ url_for('apply') }}" class="btn btn-primary btn-lg action-btn">
+                        <i class="fas fa-plus me-2"></i>Nouvelle candidature
+                    </a>
+                    <a href="{{ url_for('appointments') }}" class="btn btn-outline-light btn-lg action-btn">
+                        <i class="fas fa-calendar-plus me-2"></i>Prendre RDV
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Dashboard Content -->
+<section class="dashboard-content">
+    <div class="container-fluid">
+        <!-- Stats Cards avec design moderne -->
+        <div class="row g-4 mb-5">
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="stat-card stat-card-primary">
+                    <div class="stat-card-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="stat-card-content">
+                        <h3 class="stat-card-number">{{ applications|length }}</h3>
+                        <p class="stat-card-label">Candidatures</p>
+                        <div class="stat-card-progress">
+                            <div class="progress-bar" style="width: {{ (applications|length / 10) * 100 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="stat-card stat-card-success">
+                    <div class="stat-card-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-card-content">
+                        <h3 class="stat-card-number">{{ appointments|length }}</h3>
+                        <p class="stat-card-label">Rendez-vous</p>
+                        <div class="stat-card-progress">
+                            <div class="progress-bar" style="width: {{ (appointments|length / 10) * 100 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="stat-card stat-card-warning">
+                    <div class="stat-card-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-card-content">
+                        <h3 class="stat-card-number">{{ appointments|selectattr('status', 'equalto', 'pending')|list|length }}</h3>
+                        <p class="stat-card-label">En attente</p>
+                        <div class="stat-card-progress">
+                            <div class="progress-bar" style="width: {{ (appointments|selectattr('status', 'equalto', 'pending')|list|length / 10) * 100 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6">
+                <div class="stat-card stat-card-info">
+                    <div class="stat-card-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-card-content">
+                        <h3 class="stat-card-number">{{ applications|selectattr('status', 'equalto', 'accepted')|list|length }}</h3>
+                        <p class="stat-card-label">Acceptées</p>
+                        <div class="stat-card-progress">
+                            <div class="progress-bar" style="width: {{ (applications|selectattr('status', 'equalto', 'accepted')|list|length / 10) * 100 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Google Workspace Integration avec design moderne - Admin seulement -->
+        {% if current_user.is_authenticated and current_user.is_admin() %}
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="google-workspace-card">
+                    <div class="google-workspace-header">
+                        <div class="google-workspace-icon">
+                            <i class="fab fa-google"></i>
+                        </div>
+                        <div class="google-workspace-content">
+                            <h5 class="google-workspace-title">Intégration Google Workspace</h5>
+                            {% if google_connected %}
+                                <p class="google-workspace-status connected">
+                                    <i class="fas fa-check-circle"></i> Connecté
+                                </p>
+                            {% else %}
+                                <p class="google-workspace-status disconnected">
+                                    <i class="fas fa-link"></i> Non connecté
+                                </p>
+                            {% endif %}
+                        </div>
+                        <div class="google-workspace-action">
+                            {% if google_connected %}
+                                <a href="{{ url_for('google_disconnect') }}" class="btn btn-outline-danger">
+                                    <i class="fas fa-unlink me-2"></i>Déconnecter
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('google_auth') }}" class="btn btn-google">
+                                    <i class="fab fa-google me-2"></i>Connecter Google
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                        {% if google_connected %}
+                        <!-- Boutons de redirection Google Workspace -->
+                        <div class="google-workspace-redirects">
+                            <h6 class="mb-3">Accès rapide Google Workspace</h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('google_drive_redirect') }}" target="_blank" class="btn btn-outline-primary w-100 google-redirect-btn">
+                                        <i class="fab fa-google-drive me-2"></i>Google Drive
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('google_calendar_redirect') }}" target="_blank" class="btn btn-outline-success w-100 google-redirect-btn">
+                                        <i class="fas fa-calendar-alt me-2"></i>Google Calendar
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('google_forms_redirect') }}" target="_blank" class="btn btn-outline-warning w-100 google-redirect-btn">
+                                        <i class="fas fa-clipboard-list me-2"></i>Google Forms
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <a href="{{ url_for('google_sheets_redirect') }}" target="_blank" class="btn btn-outline-info w-100 google-redirect-btn">
+                                        <i class="fas fa-table me-2"></i>Google Sheets
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="google-workspace-features">
+                            <div class="feature-item">
+                                <i class="fab fa-google-drive"></i>
+                                <span>Sauvegarder automatiquement vos CV sur Google Drive</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Synchroniser vos rendez-vous avec Google Calendar</span>
+                            </div>
+                            <div class="feature-item">
+                                <i class="fas fa-share-alt"></i>
+                                <span>Partager facilement vos documents</span>
+                            </div>
+                        </div>
+                        
+                        {% if not config.GOOGLE_CLIENT_ID or not config.GOOGLE_CLIENT_SECRET %}
+                        <div class="google-setup-notice">
+                            <div class="notice-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="notice-content">
+                                <h6>Configuration Google OAuth requise</h6>
+                                <p>Pour utiliser l'intégration Google Workspace, l'administrateur doit configurer les clés Google OAuth.</p>
+                                <a href="{{ url_for('admin_settings') }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-cog me-1"></i>Configurer
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row g-4">
+            <!-- Applications Section avec design moderne -->
+            <div class="col-lg-8">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <div class="content-card-title">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Mes Candidatures</span>
+                        </div>
+                        <a href="{{ url_for('apply') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>Nouvelle
+                        </a>
+                    </div>
+                    <div class="content-card-body">
+                        {% if applications %}
+                            <div class="applications-table">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Poste</th>
+                                                <th>Service</th>
+                                                <th>Statut</th>
+                                                <th>Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for application in applications %}
+                                            <tr class="application-row">
+                                                <td>
+                                                    <div class="application-position">{{ application.position }}</div>
+                                                    <div class="application-experience">{{ application.experience_years }} d'expérience</div>
+                                                </td>
+                                                <td>
+                                                    <span class="service-badge">{{ application.service_type|title }}</span>
+                                                </td>
+                                                <td>
+                                                    {% if application.status == 'pending' %}
+                                                        <span class="status-badge status-pending">En attente</span>
+                                                    {% elif application.status == 'reviewed' %}
+                                                        <span class="status-badge status-reviewed">En cours</span>
+                                                    {% elif application.status == 'accepted' %}
+                                                        <span class="status-badge status-accepted">Acceptée</span>
+                                                    {% elif application.status == 'rejected' %}
+                                                        <span class="status-badge status-rejected">Refusée</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="application-date">{{ application.created_at.strftime('%d/%m/%Y') }}</div>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary view-btn" data-bs-toggle="modal" data-bs-target="#applicationModal{{ application.id }}">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <h5 class="empty-state-title">Aucune candidature</h5>
+                                <p class="empty-state-description">Vous n'avez pas encore soumis de candidature.</p>
+                                <a href="{{ url_for('apply') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Soumettre une candidature
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar avec design moderne -->
+            <div class="col-lg-4">
+                <!-- Quick Actions -->
+                <div class="content-card mb-4">
+                    <div class="content-card-header">
+                        <div class="content-card-title">
+                            <i class="fas fa-bolt"></i>
+                            <span>Actions rapides</span>
+                        </div>
+                    </div>
+                    <div class="content-card-body">
+                        <div class="quick-actions">
+                            <a href="{{ url_for('apply') }}" class="quick-action-btn primary">
+                                <i class="fas fa-file-alt"></i>
+                                <span>Nouvelle candidature</span>
+                            </a>
+                            <a href="{{ url_for('appointments') }}" class="quick-action-btn secondary">
+                                <i class="fas fa-calendar-plus"></i>
+                                <span>Prendre rendez-vous</span>
+                            </a>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Appointments -->
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <div class="content-card-title">
+                            <i class="fas fa-calendar"></i>
+                            <span>Prochains RDV</span>
+                        </div>
+                    </div>
+                    <div class="content-card-body">
+                        {% if appointments %}
+                            <div class="appointments-list">
+                                {% for appointment in appointments[:3] %}
+                                    <div class="appointment-item">
+                                        <div class="appointment-icon">
+                                            <i class="fas fa-calendar-day"></i>
+                                        </div>
+                                        <div class="appointment-content">
+                                            <h6 class="appointment-title">{{ appointment.subject }}</h6>
+                                            <p class="appointment-time">
+                                                {{ appointment.date.strftime('%d/%m/%Y') }} à {{ appointment.time.strftime('%H:%M') }}
+                                            </p>
+                                            <span class="appointment-service">{{ appointment.service_type|title }}</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                                {% if appointments|length > 3 %}
+                                    <div class="appointments-footer">
+                                        <a href="{{ url_for('appointments') }}" class="btn btn-sm btn-outline-primary">
+                                            Voir tous les RDV
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-calendar-times"></i>
+                                </div>
+                                <h5 class="empty-state-title">Aucun rendez-vous</h5>
+                                <p class="empty-state-description">Aucun rendez-vous prévu pour le moment.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Application Detail Modals -->
+{% for application in applications %}
+<div class="modal fade" id="applicationModal{{ application.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Détails de la candidature</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Informations générales</h6>
+                        <p><strong>Poste :</strong> {{ application.position }}</p>
+                        <p><strong>Service :</strong> {{ application.service_type|title }}</p>
+                        <p><strong>Statut :</strong> 
+                            {% if application.status == 'pending' %}
+                                <span class="badge bg-warning text-dark">En attente</span>
+                            {% elif application.status == 'reviewed' %}
+                                <span class="badge bg-info text-white">En cours</span>
+                            {% elif application.status == 'accepted' %}
+                                <span class="badge bg-success text-white">Acceptée</span>
+                            {% elif application.status == 'rejected' %}
+                                <span class="badge bg-danger text-white">Refusée</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Date de soumission :</strong> {{ application.created_at.strftime('%d/%m/%Y à %H:%M') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Détails</h6>
+                        <p><strong>Expérience :</strong> {{ application.experience_years }}</p>
+                        <p><strong>Disponibilité :</strong> {{ application.availability }}</p>
+                        {% if application.salary_expectation %}
+                            <p><strong>Prétentions :</strong> {{ application.salary_expectation }}</p>
+                        {% endif %}
+
+                    </div>
+                </div>
+                {% if application.cover_letter %}
+                    <hr>
+                    <h6 class="fw-bold">Lettre de motivation</h6>
+                    <p class="text-muted">{{ application.cover_letter }}</p>
+                {% endif %}
+                {% if application.notes %}
+                    <hr>
+                    <h6 class="fw-bold">Notes</h6>
+                    <p class="text-muted">{{ application.notes }}</p>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+// Animation pour les stat cards
+document.addEventListener('DOMContentLoaded', function() {
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.6s ease';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %} 

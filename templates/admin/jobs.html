@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des Offres d'Emploi - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 admin-layout">
+    <div class="row">
+        <!-- Sidebar Professionnelle -->
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="sidebar-sticky pt-3">
+                <div class="admin-header px-3 mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="admin-avatar me-3">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 text-white fw-bold">Administration</h6>
+                            <small class="text-white-50">{{ current_user.first_name }} {{ current_user.last_name }}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <ul class="nav flex-column admin-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Tableau de bord</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_settings') }}">
+                            <i class="fas fa-cogs"></i>
+                            <span>Paramètres</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_users') }}">
+                            <i class="fas fa-users"></i>
+                            <span>Utilisateurs</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_applications') }}">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Candidatures</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_appointments') }}">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Rendez-vous</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin_jobs') }}">
+                            <i class="fas fa-briefcase"></i>
+                            <span>Offres d'emploi</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="sidebar-footer mt-auto px-3 py-3">
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm w-100">
+                        <i class="fas fa-external-link-alt me-2"></i>Voir le site
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Contenu Principal -->
+        <main role="main" class="main-content px-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-briefcase me-2"></i>Gestion des Offres d'Emploi
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="{{ url_for('admin_new_job') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Nouvelle Offre
+                    </a>
+                </div>
+            </div>
+
+            <!-- Messages flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Statistiques -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Total Offres</h5>
+                                    <h3 class="mb-0">{{ jobs.total }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-briefcase fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Offres Actives</h5>
+                                    <h3 class="mb-0">{{ jobs.items | selectattr('is_active', 'equalto', true) | list | length }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-check-circle fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Offres Inactives</h5>
+                                    <h3 class="mb-0">{{ jobs.items | selectattr('is_active', 'equalto', false) | list | length }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-pause-circle fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Candidatures</h5>
+                                    <h3 class="mb-0">{{ jobs.items | map(attribute='applications') | map('length') | sum }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-users fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des offres -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Liste des Offres d'Emploi
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if jobs.items %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Titre</th>
+                                        <th>Entreprise</th>
+                                        <th>Localisation</th>
+                                        <th>Type</th>
+                                        <th>Niveau</th>
+                                        <th>Statut</th>
+                                        <th>Date</th>
+                                        <th>Candidatures</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for job in jobs.items %}
+                                    <tr>
+                                        <td>{{ job.id }}</td>
+                                        <td>
+                                            <strong>{{ job.title }}</strong>
+                                            {% if job.department %}
+                                                <br><small class="text-muted">{{ job.department }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ job.company }}</td>
+                                        <td>{{ job.location }}</td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ job.contract_type }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ job.experience_level }}</span>
+                                        </td>
+                                        <td>
+                                            {% if job.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small>{{ job.created_at.strftime('%d/%m/%Y') }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ job.applications|length }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('job_detail', job_id=job.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Voir">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{{ url_for('admin_edit_job', job_id=job.id) }}" 
+                                                   class="btn btn-sm btn-outline-warning" 
+                                                   title="Modifier">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <form method="POST" action="{{ url_for('admin_toggle_job', job_id=job.id) }}" 
+                                                      class="d-inline" 
+                                                      onsubmit="return confirm('Êtes-vous sûr de vouloir changer le statut de cette offre ?')">
+                                                    <button type="submit" class="btn btn-sm btn-outline-{{ 'danger' if job.is_active else 'success' }}" 
+                                                            title="{{ 'Désactiver' if job.is_active else 'Activer' }}">
+                                                        <i class="fas fa-{{ 'pause' if job.is_active else 'play' }}"></i>
+                                                    </button>
+                                                </form>
+                                                <form method="POST" action="{{ url_for('admin_delete_job', job_id=job.id) }}" 
+                                                      class="d-inline" 
+                                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette offre ? Cette action est irréversible.')">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if jobs.pages > 1 %}
+                        <nav aria-label="Pagination des offres d'emploi">
+                            <ul class="pagination justify-content-center">
+                                {% if jobs.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin_jobs', page=jobs.prev_num) }}">
+                                            <i class="fas fa-chevron-left"></i> Précédent
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for page_num in jobs.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != jobs.page %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('admin_jobs', page=page_num) }}">{{ page_num }}</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if jobs.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin_jobs', page=jobs.next_num) }}">
+                                            Suivant <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">Aucune offre d'emploi</h4>
+                            <p class="text-muted">Commencez par créer votre première offre d'emploi.</p>
+                            <a href="{{ url_for('admin_new_job') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Créer une offre
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+{% include 'admin/_admin_styles.html' %}
+
+<style>
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1rem;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.btn-group .btn {
+    margin-right: 0.25rem;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.pagination .page-link {
+    color: var(--bs-primary);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+</style>
+{% endblock %} 

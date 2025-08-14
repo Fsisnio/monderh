@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 admin-layout">
+    <div class="row">
+        <!-- Sidebar Professionnelle -->
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="sidebar-sticky pt-3">
+                <div class="admin-header px-3 mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="admin-avatar me-3">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 text-white fw-bold">Administration</h6>
+                            <small class="text-white-50">{{ current_user.first_name }} {{ current_user.last_name }}</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <ul class="nav flex-column admin-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Tableau de bord</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_settings') }}">
+                            <i class="fas fa-cogs"></i>
+                            <span>Paramètres</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_users') }}">
+                            <i class="fas fa-users"></i>
+                            <span>Utilisateurs</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_applications') }}">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Candidatures</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_appointments') }}">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Rendez-vous</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('admin_jobs') }}">
+                            <i class="fas fa-briefcase"></i>
+                            <span>Offres d'emploi</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="sidebar-footer mt-auto px-3 py-3">
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm w-100">
+                        <i class="fas fa-external-link-alt me-2"></i>Voir le site
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Contenu Principal -->
+        <main role="main" class="main-content px-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-edit me-2"></i>{{ title }}
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="{{ url_for('admin_jobs') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                    </a>
+                </div>
+            </div>
+
+            <!-- Messages flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Formulaire -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-briefcase me-2"></i>Informations de l'offre d'emploi
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <!-- Informations générales -->
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>Informations Générales
+                                </h6>
+                                
+                                <div class="mb-3">
+                                    {{ form.title.label(class="form-label fw-bold") }}
+                                    {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                                    {% if form.title.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.title.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.company.label(class="form-label fw-bold") }}
+                                    {{ form.company(class="form-control" + (" is-invalid" if form.company.errors else "")) }}
+                                    {% if form.company.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.company.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.location.label(class="form-label fw-bold") }}
+                                    {{ form.location(class="form-control" + (" is-invalid" if form.location.errors else "")) }}
+                                    {% if form.location.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.location.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.department.label(class="form-label fw-bold") }}
+                                    {{ form.department(class="form-control" + (" is-invalid" if form.department.errors else "")) }}
+                                    {% if form.department.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.department.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Détails du contrat -->
+                            <div class="col-md-6">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-file-contract me-2"></i>Détails du Contrat
+                                </h6>
+                                
+                                <div class="mb-3">
+                                    {{ form.contract_type.label(class="form-label fw-bold") }}
+                                    {{ form.contract_type(class="form-select" + (" is-invalid" if form.contract_type.errors else "")) }}
+                                    {% if form.contract_type.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.contract_type.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.experience_level.label(class="form-label fw-bold") }}
+                                    {{ form.experience_level(class="form-select" + (" is-invalid" if form.experience_level.errors else "")) }}
+                                    {% if form.experience_level.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.experience_level.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form.salary_range.label(class="form-label fw-bold") }}
+                                    {{ form.salary_range(class="form-control" + (" is-invalid" if form.salary_range.errors else ""), placeholder="Ex: 30000-45000€") }}
+                                    {% if form.salary_range.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.salary_range.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Format recommandé: Fourchette en euros (ex: 30000-45000€)</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.is_active(class="form-check-input") }}
+                                        {{ form.is_active.label(class="form-check-label fw-bold") }}
+                                    </div>
+                                    <div class="form-text">Les offres inactives ne sont pas visibles publiquement</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Description du poste -->
+                        <div class="mb-4">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-align-left me-2"></i>Description du Poste
+                            </h6>
+                            {{ form.description.label(class="form-label fw-bold") }}
+                            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="6", placeholder="Décrivez le poste, les missions principales, les responsabilités...") }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Minimum 50 caractères. Décrivez clairement le poste et les missions.</div>
+                        </div>
+
+                        <!-- Profil recherché -->
+                        <div class="mb-4">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-user-check me-2"></i>Profil Recherché
+                            </h6>
+                            {{ form.requirements.label(class="form-label fw-bold") }}
+                            {{ form.requirements(class="form-control" + (" is-invalid" if form.requirements.errors else ""), rows="6", placeholder="Compétences requises, formation, expérience, qualités personnelles...") }}
+                            {% if form.requirements.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.requirements.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Minimum 30 caractères. Listez les compétences et qualités requises.</div>
+                        </div>
+
+                        <!-- Avantages et bénéfices -->
+                        <div class="mb-4">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-gift me-2"></i>Avantages et Bénéfices
+                            </h6>
+                            {{ form.benefits.label(class="form-label fw-bold") }}
+                            {{ form.benefits(class="form-control" + (" is-invalid" if form.benefits.errors else ""), rows="4", placeholder="Avantages sociaux, environnement de travail, opportunités d'évolution...") }}
+                            {% if form.benefits.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.benefits.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Optionnel. Décrivez les avantages de rejoindre l'entreprise.</div>
+                        </div>
+
+                        <!-- Boutons d'action -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin_jobs') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>{{ form.submit.label.text }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Aperçu de l'offre -->
+            {% if job %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-eye me-2"></i>Aperçu de l'offre
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4>{{ job.title }}</h4>
+                            <p class="text-muted">{{ job.company }} • {{ job.location }}</p>
+                            <div class="mb-3">
+                                <span class="badge bg-primary me-2">{{ job.contract_type }}</span>
+                                <span class="badge bg-secondary me-2">{{ job.experience_level }}</span>
+                                {% if job.salary_range %}
+                                    <span class="badge bg-success">{{ job.salary_range }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <strong>Description :</strong>
+                                <p>{{ job.description[:200] }}{% if job.description|length > 200 %}...{% endif %}</p>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Profil recherché :</strong>
+                                <p>{{ job.requirements[:200] }}{% if job.requirements|length > 200 %}...{% endif %}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-end">
+                                <a href="{{ url_for('job_detail', job_id=job.id) }}" class="btn btn-outline-primary" target="_blank">
+                                    <i class="fas fa-external-link-alt me-2"></i>Voir l'offre publique
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+
+{% include 'admin/_admin_styles.html' %}
+
+<style>
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1rem;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.form-label {
+    color: #495057;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+.badge {
+    font-size: 0.875em;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+}
+
+.btn i {
+    font-size: 0.875em;
+}
+</style>
+
+<script>
+// Validation côté client
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Compteur de caractères pour les textareas
+document.addEventListener('DOMContentLoaded', function() {
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(function(textarea) {
+        const minLength = textarea.getAttribute('minlength') || 0;
+        const maxLength = textarea.getAttribute('maxlength') || 10000;
+        
+        // Créer un élément pour afficher le compteur
+        const counter = document.createElement('div');
+        counter.className = 'form-text text-end';
+        textarea.parentNode.appendChild(counter);
+        
+        function updateCounter() {
+            const length = textarea.value.length;
+            counter.textContent = `${length} caractères`;
+            
+            if (length < minLength) {
+                counter.className = 'form-text text-end text-danger';
+            } else if (length > maxLength) {
+                counter.className = 'form-text text-end text-danger';
+            } else {
+                counter.className = 'form-text text-end text-success';
+            }
+        }
+        
+        textarea.addEventListener('input', updateCounter);
+        updateCounter(); // Initialiser le compteur
+    });
+});
+</script>
+{% endblock %} 
