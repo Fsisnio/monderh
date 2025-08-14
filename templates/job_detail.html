@@ -62,9 +62,10 @@
                             <i class="fas fa-arrow-left me-2"></i>Retour aux offres
                         </a>
                         {% if current_user.is_authenticated and current_user.is_admin() %}
-                        <a href="{{ url_for('admin_edit_job', job_id=job.id) }}" class="btn btn-primary btn-lg px-5 py-3 fw-bold">
+                        <!-- Admin edit link - route not implemented yet -->
+                        <!-- <a href="{{ url_for('admin_edit_job', job_id=job.id) }}" class="btn btn-primary btn-lg px-5 py-3 fw-bold">
                             <i class="fas fa-edit me-2"></i>Modifier l'offre
-                        </a>
+                        </a> -->
                         {% endif %}
                     </div>
                 </div>
@@ -241,13 +242,15 @@
                             
                             {% if current_user.is_authenticated and current_user.is_admin() %}
                             <div class="mt-4 pt-3 border-top">
-                                <a href="{{ url_for('admin_edit_job', job_id=job.id) }}" class="btn btn-primary w-100">
+                                <!-- Admin edit link - route not implemented yet -->
+                                <!-- <a href="{{ url_for('admin_edit_job', job_id=job.id) }}" class="btn btn-primary w-100">
                                     <i class="fas fa-edit me-2"></i>Modifier cette offre
-                                </a>
+                                </a> -->
                                 <div class="mt-2">
-                                    <a href="{{ url_for('admin_jobs') }}" class="btn btn-outline-secondary btn-sm w-100">
+                                    <!-- Admin jobs link - route not implemented yet -->
+                                    <!-- <a href="{{ url_for('admin_jobs') }}" class="btn btn-outline-secondary btn-sm w-100">
                                         <i class="fas fa-list me-1"></i>Gérer toutes les offres
-                                    </a>
+                                    </a> -->
                                 </div>
                             </div>
                             {% endif %}

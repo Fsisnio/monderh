@@ -51,8 +51,24 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 mail = Mail(app)
 
+# Custom template filters
+@app.template_filter('nl2br')
+def nl2br_filter(text):
+    """Convert newlines to <br> tags"""
+    if text:
+        return text.replace('\n', '<br>')
+    return text
+
 # Create upload folder
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Initialize database tables
+with app.app_context():
+    try:
+        db.create_all()
+        print("✅ Database tables initialized successfully")
+    except Exception as e:
+        print(f"⚠️ Database initialization warning: {e}")
 
 # Database Models
 class User(UserMixin, db.Model):
@@ -256,7 +272,11 @@ class NewsletterForm(FlaskForm):
 # User loader
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User, int(user_id))
+    try:
+        return db.session.get(User, int(user_id))
+    except Exception as e:
+        print(f"Error loading user {user_id}: {e}")
+        return None
 
 # Admin decorator
 def admin_required(f):
@@ -329,15 +349,19 @@ def login():
     
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and check_password_hash(user.password_hash, form.password.data):
-            login_user(user, remember=form.remember_me.data)
-            next_page = request.args.get('next')
-            if not next_page:
-                next_page = url_for('dashboard')
-            return redirect(next_page)
-        else:
-            flash('Email ou mot de passe incorrect', 'error')
+        try:
+            user = User.query.filter_by(email=form.email.data).first()
+            if user and check_password_hash(user.password_hash, form.password.data):
+                login_user(user, remember=form.remember_me.data)
+                next_page = request.args.get('next')
+                if not next_page:
+                    next_page = url_for('dashboard')
+                return redirect(next_page)
+            else:
+                flash('Email ou mot de passe incorrect', 'error')
+        except Exception as e:
+            print(f"Login error: {e}")
+            flash('Erreur lors de la connexion. Veuillez réessayer.', 'error')
     
     return render_template('auth/login.html', form=form)
 
@@ -348,22 +372,27 @@ def register():
     
     form = RegistrationForm()
     if form.validate_on_submit():
-        if User.query.filter_by(email=form.email.data).first():
-            flash('Cet email est déjà utilisé', 'error')
-        else:
-            user = User(
-                email=form.email.data,
-                password_hash=generate_password_hash(form.password.data),
-                first_name=form.first_name.data,
-                last_name=form.last_name.data,
-                user_type=form.account_type.data,
-                company=form.company.data,
-                phone=form.phone.data
-            )
-            db.session.add(user)
-            db.session.commit()
-            flash('Compte créé avec succès! Vous pouvez maintenant vous connecter.', 'success')
-            return redirect(url_for('login'))
+        try:
+            if User.query.filter_by(email=form.email.data).first():
+                flash('Cet email est déjà utilisé', 'error')
+            else:
+                user = User(
+                    email=form.email.data,
+                    password_hash=generate_password_hash(form.password.data),
+                    first_name=form.first_name.data,
+                    last_name=form.last_name.data,
+                    user_type=form.account_type.data,
+                    company=form.company.data,
+                    phone=form.phone.data
+                )
+                db.session.add(user)
+                db.session.commit()
+                flash('Compte créé avec succès! Vous pouvez maintenant vous connecter.', 'success')
+                return redirect(url_for('login'))
+        except Exception as e:
+            print(f"Registration error: {e}")
+            db.session.rollback()
+            flash('Erreur lors de la création du compte. Veuillez réessayer.', 'error')
     
     return render_template('auth/register.html', form=form)
 
@@ -412,7 +441,54 @@ def admin_users():
 
 @app.route('/careers')
 def careers():
-    return render_template('careers.html')
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    contract_type = request.args.get('contract_type', '')
+    experience_level = request.args.get('experience_level', '')
+    
+    # Build query
+    query = JobOffer.query.filter_by(is_active=True)
+    
+    if search:
+        query = query.filter(
+            db.or_(
+                JobOffer.title.ilike(f'%{search}%'),
+                JobOffer.company.ilike(f'%{search}%'),
+                JobOffer.location.ilike(f'%{search}%'),
+                JobOffer.description.ilike(f'%{search}%')
+            )
+        )
+    
+    if contract_type:
+        query = query.filter(JobOffer.contract_type == contract_type)
+    
+    if experience_level:
+        query = query.filter(JobOffer.experience_level == experience_level)
+    
+    # Order by creation date (newest first)
+    query = query.order_by(JobOffer.created_at.desc())
+    
+    # Paginate results
+    jobs = query.paginate(page=page, per_page=10, error_out=False)
+    
+    return render_template('careers.html', jobs=jobs)
+
+@app.route('/job/<int:job_id>')
+def job_detail(job_id):
+    job = JobOffer.query.get_or_404(job_id)
+    
+    # Get similar jobs (same department or contract type)
+    similar_jobs = JobOffer.query.filter(
+        JobOffer.id != job.id,
+        JobOffer.is_active == True
+    ).filter(
+        db.or_(
+            JobOffer.department == job.department,
+            JobOffer.contract_type == job.contract_type
+        )
+    ).limit(3).all()
+    
+    return render_template('job_detail.html', job=job, similar_jobs=similar_jobs)
 
 @app.route('/apply', methods=['GET', 'POST'])
 @login_required
