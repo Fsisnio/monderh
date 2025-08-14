@@ -407,6 +407,23 @@ def appointments():
     
     return render_template('appointments.html', form=form)
 
+# Service detail routes
+@app.route('/service/<service_name>')
+def service_detail(service_name):
+    service_templates = {
+        'recrutement': 'recruitment_enhanced.html',
+        'coaching': 'coaching_enhanced.html',
+        'formation': 'formation_enhanced.html',
+        'interim': 'interim_enhanced.html',
+        'conseil': 'conseil_enhanced.html'
+    }
+    
+    template_name = service_templates.get(service_name)
+    if not template_name:
+        abort(404)
+    
+    return render_template(template_name)
+
 # Export CSV function (simplified)
 @app.route('/admin/applications/export')
 @login_required
