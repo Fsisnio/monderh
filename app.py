@@ -51,13 +51,7 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 mail = Mail(app)
 
-# Custom template filters
-@app.template_filter('nl2br')
-def nl2br_filter(text):
-    """Convert newlines to <br> tags"""
-    if text:
-        return text.replace('\n', '<br>')
-    return text
+# Custom template filters will be registered after models
 
 # Create upload folder
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -582,6 +576,14 @@ def admin_export_applications():
         mimetype='text/csv',
         headers={'Content-Disposition': 'attachment; filename=applications.csv'}
     )
+
+# Register custom template filters
+@app.template_filter('nl2br')
+def nl2br_filter(text):
+    """Convert newlines to <br> tags"""
+    if text:
+        return text.replace('\n', '<br>')
+    return text
 
 if __name__ == '__main__':
     with app.app_context():
