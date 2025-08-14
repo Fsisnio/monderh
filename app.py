@@ -248,6 +248,11 @@ class AppointmentForm(FlaskForm):
     description = TextAreaField('Description')
     submit = SubmitField('Prendre rendez-vous')
 
+class NewsletterForm(FlaskForm):
+    first_name = StringField('Prénom', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    submit = SubmitField('S\'inscrire')
+
 # User loader
 @login_manager.user_loader
 def load_user(user_id):
@@ -292,7 +297,30 @@ def index():
             'icon': '💡'
         }
     }
-    return render_template('index.html', services=services)
+    newsletter_form = NewsletterForm()
+    return render_template('index.html', services=services, newsletter_form=newsletter_form)
+
+@app.route('/subscribe_newsletter', methods=['POST'])
+def subscribe_newsletter():
+    form = NewsletterForm()
+    if form.validate_on_submit():
+        # Check if email already exists
+        existing_subscriber = Newsletter.query.filter_by(email=form.email.data).first()
+        if existing_subscriber:
+            flash('Cet email est déjà inscrit à notre newsletter.', 'info')
+        else:
+            # Create new newsletter subscription
+            subscriber = Newsletter(
+                email=form.email.data,
+                first_name=form.first_name.data
+            )
+            db.session.add(subscriber)
+            db.session.commit()
+            flash('Inscription à la newsletter réussie ! Vous recevrez nos actualités.', 'success')
+    else:
+        flash('Erreur lors de l\'inscription. Veuillez vérifier vos informations.', 'error')
+    
+    return redirect(url_for('index'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
