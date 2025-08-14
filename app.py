@@ -265,7 +265,34 @@ def admin_required(f):
 # Routes
 @app.route('/')
 def index():
-    return render_template('index.html')
+    services = {
+        'recrutement': {
+            'title': 'Recrutement',
+            'description': 'Trouvez les meilleurs talents pour votre entreprise avec notre expertise en recrutement spécialisé.',
+            'icon': '👥'
+        },
+        'coaching': {
+            'title': 'Coaching',
+            'description': 'Développez votre potentiel et atteignez vos objectifs professionnels avec notre accompagnement personnalisé.',
+            'icon': '📈'
+        },
+        'formation': {
+            'title': 'Formation',
+            'description': 'Formez vos équipes avec nos programmes de formation adaptés aux besoins de votre organisation.',
+            'icon': '🎓'
+        },
+        'interim': {
+            'title': 'Intérim',
+            'description': 'Solutions temporaires de qualité pour répondre à vos besoins ponctuels en ressources humaines.',
+            'icon': '⏰'
+        },
+        'conseil': {
+            'title': 'Conseil en Organisation',
+            'description': 'Optimisez votre structure organisationnelle et améliorez vos processus RH avec nos conseils experts.',
+            'icon': '💡'
+        }
+    }
+    return render_template('index.html', services=services)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
