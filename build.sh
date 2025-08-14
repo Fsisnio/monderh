@@ -15,7 +15,7 @@ mkdir -p static/uploads
 # Initialiser la base de données et créer les administrateurs
 echo "🗄️ Configuration de la base de données PostgreSQL..."
 python -c "
-from app_production import app, db, User
+from app import app, db, User
 from werkzeug.security import generate_password_hash
 
 with app.app_context():
