@@ -440,30 +440,37 @@ def careers():
     contract_type = request.args.get('contract_type', '')
     experience_level = request.args.get('experience_level', '')
     
-    # Build query
-    query = JobOffer.query.filter_by(is_active=True)
-    
-    if search:
-        query = query.filter(
-            db.or_(
-                JobOffer.title.ilike(f'%{search}%'),
-                JobOffer.company.ilike(f'%{search}%'),
-                JobOffer.location.ilike(f'%{search}%'),
-                JobOffer.description.ilike(f'%{search}%')
+    try:
+        # Build query
+        query = JobOffer.query.filter_by(is_active=True)
+        
+        if search:
+            query = query.filter(
+                db.or_(
+                    JobOffer.title.ilike(f'%{search}%'),
+                    JobOffer.company.ilike(f'%{search}%'),
+                    JobOffer.location.ilike(f'%{search}%'),
+                    JobOffer.description.ilike(f'%{search}%')
+                )
             )
-        )
-    
-    if contract_type:
-        query = query.filter(JobOffer.contract_type == contract_type)
-    
-    if experience_level:
-        query = query.filter(JobOffer.experience_level == experience_level)
-    
-    # Order by creation date (newest first)
-    query = query.order_by(JobOffer.created_at.desc())
-    
-    # Paginate results
-    jobs = query.paginate(page=page, per_page=10, error_out=False)
+        
+        if contract_type:
+            query = query.filter(JobOffer.contract_type == contract_type)
+        
+        if experience_level:
+            query = query.filter(JobOffer.experience_level == experience_level)
+        
+        # Order by creation date (newest first)
+        query = query.order_by(JobOffer.created_at.desc())
+        
+        # Paginate results
+        jobs = query.paginate(page=page, per_page=10, error_out=False)
+        
+    except Exception as e:
+        print(f"Database error in careers route: {e}")
+        # Return empty pagination object if database error
+        from flask_sqlalchemy.pagination import QueryPagination
+        jobs = QueryPagination([], 1, 10, 0, 1)
     
     return render_template('careers.html', jobs=jobs)
 
@@ -584,6 +591,59 @@ def nl2br_filter(text):
     if text:
         return text.replace('\n', '<br>')
     return text
+
+# Database initialization route (for production setup)
+@app.route('/init-db')
+def init_database():
+    """Initialize database tables and add sample data"""
+    try:
+        with app.app_context():
+            # Create all tables
+            db.create_all()
+            
+            # Check if we have any job offers
+            job_count = JobOffer.query.count()
+            if job_count == 0:
+                # Add sample job offers
+                sample_jobs = [
+                    JobOffer(
+                        title="Responsable RH",
+                        company="MonDRH",
+                        location="Dakar, Sénégal",
+                        contract_type="CDI",
+                        experience_level="Senior",
+                        salary_range="50000-70000€",
+                        description="Nous recherchons un Responsable RH expérimenté pour piloter notre département Ressources Humaines.",
+                        requirements="• 5+ ans d'expérience en RH\n• Formation en Gestion des RH\n• Connaissance du droit social",
+                        benefits="• Poste à responsabilités\n• Équipe dynamique\n• Formation continue",
+                        department="Ressources Humaines",
+                        is_active=True
+                    ),
+                    JobOffer(
+                        title="Consultant en Formation",
+                        company="MonDRH",
+                        location="Dakar, Sénégal",
+                        contract_type="CDD",
+                        experience_level="Confirmé",
+                        salary_range="35000-50000€",
+                        description="Rejoignez notre équipe de consultants en formation pour accompagner nos clients.",
+                        requirements="• 3+ ans d'expérience en formation\n• Certifications en formation\n• Capacités pédagogiques",
+                        benefits="• Missions variées\n• Développement professionnel\n• Travail en équipe",
+                        department="Formation",
+                        is_active=True
+                    )
+                ]
+                
+                for job in sample_jobs:
+                    db.session.add(job)
+                
+                db.session.commit()
+                return f"Database initialized successfully! Added {len(sample_jobs)} sample job offers."
+            else:
+                return f"Database already initialized! Found {job_count} existing job offers."
+                
+    except Exception as e:
+        return f"Database initialization failed: {str(e)}", 500
 
 if __name__ == '__main__':
     with app.app_context():
